@@ -110,6 +110,8 @@ export default function SetupGuide() {
   const [gasUrlInput, setGasUrlInput] = useState("");
   const [savingGas, setSavingGas] = useState(false);
 
+  const [fetchingConfig, setFetchingConfig] = useState(true);
+
   useEffect(() => {
     refreshConfig();
     checkInitialization();
@@ -127,12 +129,24 @@ export default function SetupGuide() {
     }
   };
 
-  const refreshConfig = () => {
-    fetch("/api/auth/config-status").then(res => res.json()).then(d => {
-      setConfig(d);
-      if (d.gasUrl) setGasUrlInput(d.gasUrl);
-    });
-    fetch("/api/auth/status").then(res => res.json()).then(d => setIsAuth(d.authenticated));
+  const refreshConfig = async () => {
+    setFetchingConfig(true);
+    try {
+      const [configRes, authRes] = await Promise.all([
+        fetch("/api/auth/config-status"),
+        fetch("/api/auth/status")
+      ]);
+      const configData = await configRes.json();
+      const authData = await authRes.json();
+      
+      setConfig(configData);
+      setIsAuth(authData.authenticated);
+      if (configData.gasUrl) setGasUrlInput(configData.gasUrl);
+    } catch (e) {
+      console.error("Config refresh failed");
+    } finally {
+      setFetchingConfig(false);
+    }
   };
 
   const handleSaveGasUrl = async () => {
@@ -186,8 +200,16 @@ export default function SetupGuide() {
     window.open(url, 'oauth_popup', 'width=600,height=700');
   };
 
-  const step1Done = config?.gasUrl || (config?.hasClientId && config?.hasClientSecret);
-  const step2Done = config?.gasUrl || isAuth;
+  const step2Done = !fetchingConfig && (config?.gasUrl || isAuth);
+
+  if (fetchingConfig) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Checking GS Connection...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-20">
@@ -271,40 +293,43 @@ export default function SetupGuide() {
           </section>
 
           {/* STEP 2: PROVISIONING */}
-          <section className="relative pl-12 border-l-2 border-slate-100 ml-4 pb-4">
-            <div className={`absolute -left-[17px] top-0 w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg ring-4 ring-white ${initStatus === 'success' ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>2</div>
-            <h4 className="font-bold text-lg mb-2">Automated Schema Deployment</h4>
-            <p className="text-sm text-slate-500 mb-6">Create the Master Meters, RAW_DATA, and Calculations tabs with one click.</p>
-            
-            <div className="flex flex-col gap-4 max-w-sm">
-               <button
-                onClick={handleInit}
-                disabled={initStatus === 'loading' || !step2Done}
-                className="flex items-center justify-center gap-3 bg-[#1E293B] text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition-all active:scale-[0.98] disabled:opacity-20 shadow-xl shadow-slate-200"
-               >
-                 {initStatus === 'loading' ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} />}
-                 <span className="tracking-tight">Deploy Database Schema</span>
-               </button>
-               
-               {initStatus === 'success' && (
-                 <div className="p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl flex items-center gap-3 text-xs font-bold animate-in fade-in slide-in-from-bottom-2 duration-500">
-                   <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center">
-                      <CheckCircle size={14} />
-                   </div>
-                   DATABASE CONNECTED & READY
-                 </div>
-               )}
+          {initStatus !== 'success' && (
+            <section className="relative pl-12 border-l-2 border-slate-100 ml-4 pb-4">
+              <div className={`absolute -left-[17px] top-0 w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg ring-4 ring-white ${initStatus === 'success' ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>2</div>
+              <h4 className="font-bold text-lg mb-2">Automated Schema Deployment</h4>
+              <p className="text-sm text-slate-500 mb-6">Create the Master Meters, RAW_DATA, and Calculations tabs with one click.</p>
+              
+              <div className="flex flex-col gap-4 max-w-sm">
+                <button
+                  onClick={handleInit}
+                  disabled={initStatus === 'loading' || !step2Done}
+                  className="flex items-center justify-center gap-3 bg-[#1E293B] text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition-all active:scale-[0.98] disabled:opacity-20 shadow-xl shadow-slate-200"
+                >
+                  {initStatus === 'loading' ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} />}
+                  <span className="tracking-tight">Deploy Database Schema</span>
+                </button>
 
-               {(initStatus === 'error' || error) && (
-                 <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl flex flex-col gap-2 text-xs font-bold animate-shake">
-                   <div className="flex items-center gap-2">
-                     <AlertTriangle size={18} /> ACTION REQUIRED
-                   </div>
-                   <p className="opacity-80 leading-relaxed">{error || "Ensure the Bridge URL is correct and deployed for 'Anyone'."}</p>
-                 </div>
-               )}
-            </div>
-          </section>
+                {(initStatus === 'error' || error) && (
+                  <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl flex flex-col gap-2 text-xs font-bold animate-shake">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle size={18} /> ACTION REQUIRED
+                    </div>
+                    <p className="opacity-80 leading-relaxed">{error || "Ensure the Bridge URL is correct and deployed for 'Anyone'."}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {initStatus === 'success' && (
+             <section className="relative pl-12 border-l-2 border-emerald-100 ml-4 pb-4">
+                <div className="absolute -left-[17px] top-0 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold shadow-lg ring-4 ring-white">
+                  <CheckCircle size={16} />
+                </div>
+                <h4 className="font-bold text-lg text-emerald-800 mb-2">Structure Verified</h4>
+                <p className="text-sm text-emerald-600 font-medium">Sheets structure is active and operational. Redirecting focus to billing configuration.</p>
+             </section>
+          )}
 
           {/* TARIFF CONFIG */}
           <section className="pt-8 border-t border-slate-100">

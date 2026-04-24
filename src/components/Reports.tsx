@@ -24,7 +24,7 @@ export default function Reports() {
       .catch(() => setMeters([]));
   }, []);
 
-  const buildings = Array.from(new Set(meters.map(m => m.building || "Unknown")));
+  const buildings = Array.from(new Set(meters.map(m => m.Building || "Unknown")));
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -109,7 +109,7 @@ export default function Reports() {
                     onChange={e => setFilters({ ...filters, meterId: e.target.value })}
                   >
                     <option value="">All Meters</option>
-                    {meters.map(m => <option key={m.id} value={m.id}>{m.id}</option>)}
+                    {meters.map(m => <option key={m.MeterID} value={m.MeterID}>{m.MeterID}</option>)}
                   </select>
                 </div>
               </div>

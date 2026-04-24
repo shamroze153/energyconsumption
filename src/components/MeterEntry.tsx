@@ -153,42 +153,57 @@ export default function MeterEntry() {
 
       {/* Meter Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {meters.map((meter) => (
-          <motion.button
-            key={meter.MeterID}
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedMeterId(meter.MeterID)}
-            className={`group h-44 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-3 transition-all relative overflow-hidden ${
-              meter.isDone 
-              ? 'bg-emerald-50/40 border-emerald-100 hover:bg-emerald-50 hover:border-emerald-300' 
-              : 'bg-white border-slate-100 shadow-sm hover:border-rose-200 hover:bg-rose-50/30'
-            }`}
-          >
-             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                meter.isDone ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 'bg-slate-50 text-slate-400 group-hover:bg-rose-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-rose-100'
-             }`}>
-               <Gauge size={28} />
-             </div>
-             
-             <div className="text-center">
-               <h3 className="text-lg font-black text-slate-800 tracking-tight">{meter.MeterID}</h3>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
-                 {meter.Building || 'Unknown'}
-               </p>
-             </div>
-
-             {meter.isDone ? (
-               <div className="absolute top-4 right-4 text-emerald-500">
-                 <CheckCircle2 size={16} />
+        {meters.map((meter) => {
+          const isNoDisplay = String(meter.MeterID) === "14" || String(meter.MeterID) === "15";
+          
+          return (
+            <motion.button
+              key={meter.MeterID}
+              whileHover={!isNoDisplay ? { y: -4, scale: 1.02 } : {}}
+              whileTap={!isNoDisplay ? { scale: 0.98 } : {}}
+              onClick={() => !isNoDisplay && setSelectedMeterId(meter.MeterID)}
+              className={`group h-44 rounded-[2rem] border-2 flex flex-col items-center justify-center gap-3 transition-all relative overflow-hidden ${
+                isNoDisplay
+                ? 'bg-slate-50 border-slate-100 opacity-60 cursor-not-allowed'
+                : meter.isDone 
+                ? 'bg-emerald-50/40 border-emerald-100 hover:bg-emerald-50 hover:border-emerald-300' 
+                : 'bg-white border-slate-100 shadow-sm hover:border-rose-200 hover:bg-rose-50/30'
+              }`}
+            >
+               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                  isNoDisplay ? 'bg-slate-200 text-slate-400' :
+                  meter.isDone ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-100' : 
+                  'bg-slate-50 text-slate-400 group-hover:bg-rose-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-rose-100'
+               }`}>
+                 {isNoDisplay ? <span className="text-2xl font-black">✕</span> : <Gauge size={28} />}
                </div>
-             ) : (
-               <div className="absolute top-4 right-4 text-rose-300 group-hover:text-rose-500">
-                 <AlertCircle size={16} />
+               
+               <div className="text-center px-4">
+                 <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none">{meter.MeterID}</h3>
+                 {isNoDisplay ? (
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mt-1">No Display</p>
+                 ) : (
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1"># {meter.MeterNo || 'N/A'}</p>
+                 )}
+                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60 mt-0.5 truncate max-w-[100px]">
+                   {meter.Building || 'Unknown'}
+                 </p>
                </div>
-             )}
-          </motion.button>
-        ))}
+  
+               {!isNoDisplay && (
+                 meter.isDone ? (
+                   <div className="absolute top-4 right-4 text-emerald-500">
+                     <CheckCircle2 size={16} />
+                   </div>
+                 ) : (
+                   <div className="absolute top-4 right-4 text-rose-300 group-hover:text-rose-500">
+                     <AlertCircle size={16} />
+                   </div>
+                 )
+               )}
+            </motion.button>
+          );
+        })}
       </div>
 
       {/* Focused Entry Modal */}

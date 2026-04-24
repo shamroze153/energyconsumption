@@ -87,11 +87,19 @@ app.get("/api/auth/config-status", (req, res) => {
   });
 });
 
+const saveConfig = (data: any) => {
+  try {
+    const existing = fs.existsSync(TOKEN_PATH) ? JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8")) : {};
+    fs.writeFileSync(TOKEN_PATH, JSON.stringify({ ...existing, ...data }));
+  } catch (e) {
+    console.warn("Could not persist config to filesystem (likely read-only environment). Config will stay in memory only.");
+  }
+};
+
 app.post("/api/auth/gas-url", (req, res) => {
   const { url } = req.body;
   gasUrl = url;
-  const existing = fs.existsSync(TOKEN_PATH) ? JSON.parse(fs.readFileSync(TOKEN_PATH, "utf8")) : {};
-  fs.writeFileSync(TOKEN_PATH, JSON.stringify({ ...existing, gasUrl: url }));
+  saveConfig({ gasUrl: url });
   res.json({ success: true });
 });
 
@@ -117,7 +125,7 @@ app.get("/auth/callback", async (req, res) => {
   try {
     const { tokens } = await oauth2Client.getToken(code as string);
     userTokens = tokens;
-    fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokens)); // Persist tokens
+    saveConfig({ tokens }); // Persist tokens
     res.send(`
       <html>
         <body>
@@ -136,7 +144,11 @@ app.get("/auth/callback", async (req, res) => {
 
 app.post("/api/auth/logout", (req, res) => {
   userTokens = null;
-  if (fs.existsSync(TOKEN_PATH)) fs.unlinkSync(TOKEN_PATH);
+  try {
+    if (fs.existsSync(TOKEN_PATH)) fs.unlinkSync(TOKEN_PATH);
+  } catch (e) {
+    console.warn("Could not delete token file.");
+  }
   res.json({ success: true });
 });
 

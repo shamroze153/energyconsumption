@@ -1,0 +1,6 @@
+{
+  "name": "Disrupt Energy Tracking",
+  "description": "Comprehensive Industrial Energy Management Portal for Multiple Buildings and Meters",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["Google Sheets Integration", "Energy Analytics", "Fleet Management"]
+}

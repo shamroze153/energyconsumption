@@ -76,9 +76,15 @@ export default function MeterEntry() {
 
   if (loading && meters.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Syncing Meters...</p>
+      <div className="flex flex-col items-center justify-center min-h-[500px] gap-6 animate-in fade-in duration-500">
+        <div className="relative">
+           <div className="w-20 h-20 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+           <Gauge className="absolute inset-0 m-auto text-blue-600 active:scale-110 transition-transform" size={24} />
+        </div>
+        <div className="text-center space-y-2">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight">Accessing Grid</h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] animate-pulse">Please hold, connecting to bridge...</p>
+        </div>
       </div>
     );
   }

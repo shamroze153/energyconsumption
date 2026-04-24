@@ -17,14 +17,20 @@ export default function Dashboard() {
       });
   }, []);
 
-  if (loading) return (
-    <div className="animate-pulse space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white rounded-2xl border border-slate-200"></div>)}
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] gap-6 animate-in fade-in duration-700">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-blue-50 border-t-blue-600 rounded-full animate-spin"></div>
+          <Zap className="absolute inset-0 m-auto text-blue-600 animate-pulse" size={20} />
+        </div>
+        <div className="text-center space-y-2">
+          <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Syncing Records</h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Please hold, updating dashboard...</p>
+        </div>
       </div>
-      <div className="h-96 bg-white rounded-2xl border border-slate-200"></div>
-    </div>
-  );
+    );
+  }
 
   const buildingData = Object.entries(data?.buildingStats || {}).map(([name, stats]: any) => ({
     name,

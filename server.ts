@@ -60,10 +60,20 @@ const getBridge = async (action: string, params: Record<string, string> = {}) =>
   const activeUrl = gasUrl || DEFAULT_GAS_URL;
   if (!activeUrl) throw new Error("GAS Bridge URL not configured.");
   const qs = new URLSearchParams({ action, ...params }).toString();
-  const response = await fetch(`${activeUrl}?${qs}`);
-  const res = await response.json();
-  if (res.error) throw new Error(res.error);
-  return res;
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+  try {
+    const response = await fetch(`${activeUrl}?${qs}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const res = await response.json();
+    if (res.error) throw new Error(res.error);
+    return res;
+  } catch (e: any) {
+    if (e.name === 'AbortError') throw new Error("Bridge request timed out. Please check your GS connectivity.");
+    throw e;
+  }
 };
 
 // --- AUTH ROUTES ---
@@ -289,11 +299,18 @@ app.post("/api/settings", async (req, res) => {
   }
 });
 
+let cachedMeters: { data: any; timestamp: number } | null = null;
+
 app.get("/api/meters", async (req, res) => {
   try {
+    if (cachedMeters && Date.now() - cachedMeters.timestamp < CACHE_TTL) {
+       return res.json(cachedMeters.data);
+    }
+
     const activeGasUrl = gasUrl || DEFAULT_GAS_URL;
     if (activeGasUrl) {
       const result = await getBridge("getMeters");
+      cachedMeters = { data: result, timestamp: Date.now() };
       return res.json(result);
     }
     const sheets = getSheetsClient()!;
@@ -407,13 +424,26 @@ app.post("/api/readings", async (req, res) => {
   }
 });
 
+let cachedDashboard: { data: any; timestamp: number } | null = null;
+const CACHE_TTL = 15000; // 15 seconds cache
+
 app.get("/api/dashboard", async (req, res) => {
   try {
+    // Return cached data if fresh
+    if (cachedDashboard && Date.now() - cachedDashboard.timestamp < CACHE_TTL) {
+      return res.json(cachedDashboard.data);
+    }
+
     const activeGasUrl = gasUrl || DEFAULT_GAS_URL;
     if (activeGasUrl) {
       const result = await getBridge("getDashboard");
+      
+      // Update cache
+      cachedDashboard = { data: result, timestamp: Date.now() };
+      
       return res.json(result);
     }
+    // ... rest of the logic
     const sheets = getSheetsClient()!;
     const spreadsheetId = getSpreadsheetId();
     const calcData = await sheets.spreadsheets.values.get({

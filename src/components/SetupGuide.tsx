@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Settings, CheckCircle, ExternalLink, RefreshCw, AlertTriangle, Info, Save, Zap } from "lucide-react";
 
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzrsNLrUQsYsTAzWZ9aUsdTM61PiDIoG4E0fS5PPBtjxhkXiHgRBc_CWzy4y7rpjFhr/exec";
+
 const DynamicSettings = () => {
   const [settings, setSettings] = useState<any>({
     PEAK_START: "18:30",
@@ -110,7 +112,20 @@ export default function SetupGuide() {
 
   useEffect(() => {
     refreshConfig();
+    checkInitialization();
   }, []);
+
+  const checkInitialization = async () => {
+    try {
+      const res = await fetch("/api/meters");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setInitStatus('success');
+      }
+    } catch (e) {
+      // Not initialized yet or error
+    }
+  };
 
   const refreshConfig = () => {
     fetch("/api/auth/config-status").then(res => res.json()).then(d => {
@@ -206,9 +221,9 @@ export default function SetupGuide() {
                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">FASTEST</span>
             </div>
             
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-               <p className="text-sm text-slate-600 mb-6">
-                 No Google Cloud account needed. Just copy our bridge script into your sheet and paste the link below.
+             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+               <p className="text-sm text-slate-600 mb-6 font-medium">
+                 {gasUrlInput === DEFAULT_GAS_URL ? "System is using the Pre-Configured Global Bridge. Your database is ready." : "No Google Cloud account needed. Just copy our bridge script into your sheet and paste the link below."}
                </p>
                
                <div className="space-y-4">
@@ -232,14 +247,25 @@ export default function SetupGuide() {
                     </div>
                  </div>
                  
-                 <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                       <Info size={20} className="text-slate-400" />
+                 {gasUrlInput === DEFAULT_GAS_URL ? (
+                    <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 text-white">
+                         <CheckCircle size={20} />
+                      </div>
+                      <p className="text-[11px] text-emerald-700 font-bold leading-relaxed uppercase tracking-tight">
+                        Global Disrupt Bridge is Active. No manual script deployment required.
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed uppercase tracking-tight">
-                      Open <b>MASTER_BRIDGE.gs</b> file in the sidebar, copy contents to your sheet's Apps Script, and deploy as Web App.
-                    </p>
-                 </div>
+                 ) : (
+                    <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                          <Info size={20} className="text-slate-400" />
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed uppercase tracking-tight">
+                          Open <b>MASTER_BRIDGE.gs</b> file in the sidebar, copy contents into your Sheets Script, and deploy as Web App.
+                        </p>
+                    </div>
+                 )}
                </div>
             </div>
           </section>

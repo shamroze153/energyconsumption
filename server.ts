@@ -73,7 +73,7 @@ app.get("/api/auth/config-status", (req, res) => {
     hasClientId: !!process.env.GOOGLE_CLIENT_ID,
     hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
     spreadsheetId: getSpreadsheetId(),
-    gasUrl: gasUrl
+    gasUrl: gasUrl || DEFAULT_GAS_URL
   });
 });
 
@@ -86,7 +86,7 @@ app.post("/api/auth/gas-url", (req, res) => {
 });
 
 app.get("/api/auth/status", (req, res) => {
-  res.json({ authenticated: !!userTokens || !!gasUrl });
+  res.json({ authenticated: !!userTokens || !!gasUrl || !!DEFAULT_GAS_URL });
 });
 
 app.get("/api/auth/url", (req, res) => {

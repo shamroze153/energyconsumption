@@ -299,15 +299,21 @@ export default function SetupGuide() {
               <h4 className="font-bold text-lg mb-2">Automated Schema Deployment</h4>
               <p className="text-sm text-slate-500 mb-6">Create the Master Meters, RAW_DATA, and Calculations tabs with one click.</p>
               
-              <div className="flex flex-col gap-4 max-w-sm">
-                <button
-                  onClick={handleInit}
-                  disabled={initStatus === 'loading' || !step2Done}
-                  className="flex items-center justify-center gap-3 bg-[#1E293B] text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition-all active:scale-[0.98] disabled:opacity-20 shadow-xl shadow-slate-200"
-                >
-                  {initStatus === 'loading' ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} />}
-                  <span className="tracking-tight">Deploy Database Schema</span>
-                </button>
+                <div className="group relative">
+                  <button
+                    onClick={handleInit}
+                    disabled={initStatus === 'loading' || !step2Done}
+                    className="w-full flex items-center justify-center gap-3 bg-[#1E293B] text-white px-8 py-4 rounded-2xl font-bold hover:bg-black transition-all active:scale-[0.98] disabled:opacity-30 shadow-xl shadow-slate-200"
+                  >
+                    {initStatus === 'loading' ? <RefreshCw size={20} className="animate-spin" /> : <RefreshCw size={20} />}
+                    <span className="tracking-tight">Deploy Database Schema</span>
+                  </button>
+                  {!step2Done && !fetchingConfig && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
+                      Complete Step 1 or 2 to unlock deployment
+                    </div>
+                  )}
+                </div>
 
                 {(initStatus === 'error' || error) && (
                   <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl flex flex-col gap-2 text-xs font-bold animate-shake">
@@ -317,7 +323,6 @@ export default function SetupGuide() {
                     <p className="opacity-80 leading-relaxed">{error || "Ensure the Bridge URL is correct and deployed for 'Anyone'."}</p>
                   </div>
                 )}
-              </div>
             </section>
           )}
 

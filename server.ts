@@ -471,14 +471,17 @@ app.get("/api/dashboard", async (req, res) => {
     const meterStats: Record<string, { units: number, cost: number }> = {};
     const tariffStats = { Peak: 0, OffPeak: 0 };
     const hourlyStats: Record<number, number> = {};
+    const dailyStats: Record<string, number> = {};
 
     rows.forEach(r => {
+      const date = r[0];
       const bld = meterBuildingMap[r[2]] || "Unknown";
       const units = parseFloat(r[5]) || 0;
       const cost = parseFloat(r[9]) || 0;
       const tType = r[7];
       const hr = parseInt(r[6]);
 
+      // Overall stats
       buildingStats[bld] = buildingStats[bld] || { units: 0, cost: 0 };
       buildingStats[bld].units += units;
       buildingStats[bld].cost += cost;
@@ -490,7 +493,11 @@ app.get("/api/dashboard", async (req, res) => {
       if (tType === "Peak") tariffStats.Peak += units;
       else tariffStats.OffPeak += units;
 
+      // Hourly (of all time or we could filter - for now let's keep as is but add daily)
       hourlyStats[hr] = (hourlyStats[hr] || 0) + units;
+      
+      // Daily
+      dailyStats[date] = (dailyStats[date] || 0) + units;
     });
 
     res.json({
@@ -498,7 +505,8 @@ app.get("/api/dashboard", async (req, res) => {
       buildingStats,
       meterStats,
       tariffStats,
-      hourlyStats
+      hourlyStats,
+      dailyStats
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
